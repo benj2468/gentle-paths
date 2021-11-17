@@ -39,7 +39,7 @@ function getLocations(){
   async function getResult(locations){
     // console.log(locations)
     let response = await client.elevation({
-      params: {locations, key: "AIzaSyBKgW05ubxC3lb_-Dl2rHM4fzeggJHSIcY"}
+      params: {locations, key: process.env.GOOGLE_API}
     })
     return response.data.results
   }
