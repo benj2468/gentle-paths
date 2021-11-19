@@ -13,7 +13,7 @@ def surface_simplifier(S: TerrainGraph, num_nodes: List[int]):
     S.tri.simplices.dtype = np.uint32
 
     for n in num_nodes:
-        points, = simplify_mesh(
+        points, _ = simplify_mesh(
             points,
             S.tri.simplices,
             num_nodes=n,
