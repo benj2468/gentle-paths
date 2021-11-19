@@ -1,51 +1,14 @@
 from __future__ import annotations
-from functools import reduce
-from collections import defaultdict
+
 from typing import Any, Generator, List, Mapping, Optional, Set, Tuple
 import numpy as np
 from numpy.random.mtrand import randint
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
-from math import acos, pi
-from mpl_toolkits import mplot3d
-
-from tri_collide import TriTri2D
-
-
-def gather_points(p1, p2, count):
-    (x, y) = p1
-    (x2, y2) = p2
-    dx = abs(x2 - x)
-    dy = abs(y2 - y)
-    for i in range(1, count + 1):
-        c_x = (dx / float(i))
-        c_y = (dy / dx) * c_x if dx != 0 else (dy / float(i))
-
-        yield c_x + x, c_y + y
-
-
-def split_cycle(list: List[Any], i: int,
-                j: int) -> Tuple[List[Any], List[Any]]:
-    l1 = []
-    l2 = []
-    k = i
-    filling = 0
-    while len(l1) + len(l2) < len(list) + 2:
-        if not filling:
-            l1.append(list[k])
-        else:
-            l2.append(list[k])
-        if k == j and not filling:
-            filling = not filling
-        else:
-            k += 1
-            k %= len(list)
-
-    return (l1, l2)
 
 
 class Location(object):
-    def __init__(self, x: int, y: int, z: int) -> None:
+    def __init__(self, x: float, y: float, z: float) -> None:
         self.x = x
         self.y = y
         self.z = z
@@ -197,47 +160,6 @@ class TerrainGraph(object):
         self._2d.remove(node.proj())
         self._update_faces()
 
-    def neighboring_faces(self, idx: int):
-        neighboring_faces = []
-        for s in self.tri.neighbors[idx]:
-            if s == -1:
-                continue
-            f = Face(list(map(lambda x: self.nodes[x], self.tri.simplices[s])))
-            neighboring_faces.append(f)
-        return neighboring_faces
-
-    def remove_node_new(self, node: TerrainNode):
-        idx = np.where(self.nodes == node)[0][0]
-        # affected_v = []
-        # for s in self.tri.neighbors[idx]:
-        #     for v in self.tri.simplices[s]:
-        #         affected_v.append(v)
-        nodes = np.delete(self.nodes, idx)
-        return TerrainGraph(nodes)
-        # , affected_v
-
-    def overlapping_faces(self, face: Face) -> Set[Face]:
-        res = set()
-        # points = list(map(lambda x: x._loc.proj(), face.nodes))
-        # t1 = points[0]
-        # t2 = points[1]
-        # t3 = points[2]
-        # points = list(gather_points(t1, t2, 10)) + list(
-        #     gather_points(t2, t3, 10)) + list(gather_points(t1, t3, 10))
-        # overlapping = self.tri.find_simplex(points)
-        # for o in overlapping:
-        #     simplex = self.tri.simplices[o]
-        #     tri = list(map(lambda x: self.nodes[x], simplex))
-        #     res.add(Face(tri))
-
-        for simplex in self.tri.simplices:
-            tri = list(map(lambda x: self.nodes[x], simplex))
-            f = Face(tri)
-            if TriTri2D(f.proj(), face.proj()):
-                res.add(f)
-
-        return res
-
     def plot(self):
         points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))
         ax = plt.axes(projection='3d')
@@ -247,14 +169,6 @@ class TerrainGraph(object):
                         cmap='viridis',
                         edgecolor='none')
         plt.show()
-
-        # plt.triplot(points[:, 0], points[:, 1], self.tri.simplices)
-        # plt.plot(points[:, 0], points[:, 1], 'o')
-        # plt.show()
-
-    def triangulate(self):
-        if len(self.nodes) >= 3:
-            self.tri = Delaunay(self._2d)
 
     def __str__(self) -> str:
         if self.tri:
