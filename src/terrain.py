@@ -2,11 +2,26 @@ from __future__ import annotations
 from functools import reduce
 from collections import defaultdict
 from typing import Any, Generator, List, Mapping, Optional, Set, Tuple
-from numpy import array, linalg
-import numpy
-from math import acos, sqrt
+import numpy as np
+from numpy.random.mtrand import randint
+from scipy.spatial import Delaunay
+import matplotlib.pyplot as plt
+from math import acos, pi
+from mpl_toolkits import mplot3d
 
 from tri_collide import TriTri2D
+
+
+def gather_points(p1, p2, count):
+    (x, y) = p1
+    (x2, y2) = p2
+    dx = abs(x2 - x)
+    dy = abs(y2 - y)
+    for i in range(1, count + 1):
+        c_x = (dx / float(i))
+        c_y = (dy / dx) * c_x if dx != 0 else (dy / float(i))
+
+        yield c_x + x, c_y + y
 
 
 def split_cycle(list: List[Any], i: int,
@@ -54,7 +69,7 @@ class Location(object):
 
 
 class TerrainNode(object):
-    def __init__(self, label: int, location: Location):
+    def __init__(self, label: Any, location: Location):
         self._label = label
         self._loc = location
         super().__init__()
@@ -62,8 +77,11 @@ class TerrainNode(object):
     def get_height(self) -> int:
         return self._loc.z
 
-    def get_label(self) -> int:
+    def get_label(self) -> Any:
         return self._label
+
+    def proj(self) -> Tuple[int, int]:
+        return self._loc.proj()
 
     def __str__(self) -> str:
         return f"{self._label}"
@@ -72,17 +90,19 @@ class TerrainNode(object):
         return self._label == other._label and self._loc == other._loc
 
     def __hash__(self) -> int:
-        return (self._label, self._loc).__hash__()
+        return hash((self._label, self._loc))
 
 
-class Dart(object):
+class Dart():
     def __init__(self, source: TerrainNode, destination: TerrainNode) -> None:
         self.source = source
         self.destination = destination
-        super().__init__()
 
     def __hash__(self) -> int:
-        return (self.source, self.destination).__hash__()
+        return hash((self.source, self.destination))
+
+    def __eq__(self, o: Dart) -> bool:
+        return hash(self) == hash(o)
 
     def __str__(self) -> str:
         return f"{self.source} -> {self.destination}"
@@ -100,21 +120,20 @@ class Face(object):
         return Face(nodes)
 
     def add_node(self, node: TerrainNode):
-        self.nodes.append(node)
+        self.nodes = np.append(self.nodes, [node])
 
     def proj(self) -> Generator[Tuple[int, int]]:
         if len(self.nodes) != 3:
             print("Can only determine projection of triangle")
             return
 
-        return map(lambda x: x._loc.proj(), self.nodes)
+        return list(map(lambda x: x._loc.proj(), self.nodes))
 
-    def angle(self) -> float:
+    def tangent_vector(self) -> np.ndarray:
         if len(self.nodes) != 3:
             print("Can only determine angle of a plane")
             return
-
-        points = list(map(lambda x: numpy.array(tuple(x._loc)), self.nodes))
+        points = list(map(lambda x: np.array(tuple(x._loc)), self.nodes))
         p1 = points[0]
         p2 = points[1]
         p3 = points[2]
@@ -123,120 +142,158 @@ class Face(object):
         v2 = p2 - p1
 
         # the cross product is a vector normal to the plane
-        cp = numpy.cross(v1, v2)
+        cp = np.cross(v1, v2)
+        norm = np.linalg.norm(cp, ord=1)
+        if norm == 0:
+            norm = np.finfo(cp.dtype).eps
+        return cp / norm
 
-        xy_norm = numpy.array([0, 0, 1])
+    def angle(self, otherFace: Face = None) -> float:
 
-        return acos(
-            numpy.dot(xy_norm, cp) /
-            (numpy.linalg.norm(cp) * numpy.linalg.norm(xy_norm)))
+        cp = self.tangent_vector()
+
+        other = np.array([0, 0, 1
+                          ]) if not otherFace else otherFace.tangent_vector()
+
+        val = (np.dot(other, cp) /
+               (np.linalg.norm(cp) * np.linalg.norm(other))).round(8)
+
+        return acos(val)
+
+    def __hash__(self) -> str:
+        if len(self.nodes) != 3:
+            raise ("bad face")
+        return hash((self.nodes[0], self.nodes[1], self.nodes[2]))
+
+    def __eq__(self, o: Face) -> bool:
+        return hash(self) == hash(o)
 
     def __str__(self) -> str:
         return ", ".join(map(str, self.nodes))
 
 
 class TerrainGraph(object):
-    def __init__(self) -> None:
-        self.rot: Mapping[TerrainNode, List[TerrainNode]] = defaultdict(None)
-        self.faces: Mapping[TerrainNode, Set[Face]] = defaultdict(None)
-        self.dart_faces: Mapping[Dart, Face] = defaultdict(None)
-        self.all_faces: Set[Face] = set()
+    def __init__(self, nodes: List[TerrainNode]) -> None:
+        self.nodes: List[TerrainNode] = np.array(nodes)
+        self._2d: List[Tuple[int, int]] = list(map(lambda x: x.proj(), nodes))
+        self._update_faces()
         super().__init__()
 
+    def _update_faces(self):
+        self.tri = Delaunay(self._2d) if len(self.nodes) >= 3 else None
+        self.faces = list(
+            map(Face,
+                map(lambda x: self.nodes[x],
+                    self.tri.simplices))) if len(self.nodes) >= 3 else None
+
     def add_node(self, node: TerrainNode):
-        self.rot[node] = []
-        self.faces[node] = set()
-
-    def add_edge(self, n1: TerrainNode, n1_loc: int, n2: TerrainNode,
-                 n2_loc: int):
-        if not n1 in self.rot or not n2 in self.rot:
-            raise ("Cannot add edge between nonexistnet nodes")
-
-        self.rot[n1] = self.rot[n1][:n1_loc] + [n2] + self.rot[n1][n1_loc:]
-        self.rot[n2] = self.rot[n2][:n2_loc] + [n1] + self.rot[n2][n2_loc:]
-
-        ## Fix the faces
-
-        ## Check if this edge closes a cycle
-        def add_dart(a, b):
-            start = Dart(a, b)
-            cur = start
-            path = []
-            while cur:
-                if cur.destination == start.source:
-                    path += [cur]
-                    face = Face.from_darts(path)
-                    for dart in path:
-                        if str(dart) in self.dart_faces and self.dart_faces[
-                                str(dart)] in self.all_faces:
-                            self.all_faces.remove(self.dart_faces[str(dart)])
-                        self.dart_faces[str(dart)] = face
-                    for v in face.nodes:
-                        self.faces[v].add(face)
-                    self.all_faces.add(face)
-                    break
-                if cur in path:
-                    break
-                path += [cur]
-                cur = self.next(cur)
-
-        add_dart(n1, n2)
-        add_dart(n2, n1)
+        self.nodes = np.append(self.nodes, [node])
+        self._2d.append(node.proj())
+        self._update_faces()
 
     def remove_node(self, node: TerrainNode):
-        # TODO
-        # This needs to be done that that we can perform the BFS and actually simplify the graph
-        pass
+        idx = np.where(self.nodes == node)[0][0]
+        self.nodes = np.delete(self.nodes, idx)
+        self._2d.remove(node.proj())
+        self._update_faces()
 
-    def next(self, dart: Dart) -> Optional[Dart]:
-        (source, destination) = (dart.source, dart.destination)
-        rotation = self.rot[destination]
+    def neighboring_faces(self, idx: int):
+        neighboring_faces = []
+        for s in self.tri.neighbors[idx]:
+            if s == -1:
+                continue
+            f = Face(list(map(lambda x: self.nodes[x], self.tri.simplices[s])))
+            neighboring_faces.append(f)
+        return neighboring_faces
 
-        source_index = rotation.index(source)
-        next_index = (source_index + 1) % len(rotation)
-        if next_index == source_index:
-            return None
+    def remove_node_new(self, node: TerrainNode):
+        idx = np.where(self.nodes == node)[0][0]
+        # affected_v = []
+        # for s in self.tri.neighbors[idx]:
+        #     for v in self.tri.simplices[s]:
+        #         affected_v.append(v)
+        nodes = np.delete(self.nodes, idx)
+        return TerrainGraph(nodes)
+        # , affected_v
 
-        return Dart(destination, rotation[next_index])
+    def overlapping_faces(self, face: Face) -> Set[Face]:
+        res = set()
+        # points = list(map(lambda x: x._loc.proj(), face.nodes))
+        # t1 = points[0]
+        # t2 = points[1]
+        # t3 = points[2]
+        # points = list(gather_points(t1, t2, 10)) + list(
+        #     gather_points(t2, t3, 10)) + list(gather_points(t1, t3, 10))
+        # overlapping = self.tri.find_simplex(points)
+        # for o in overlapping:
+        #     simplex = self.tri.simplices[o]
+        #     tri = list(map(lambda x: self.nodes[x], simplex))
+        #     res.add(Face(tri))
 
-    def overlapping_faces(self, face: Face) -> Generator[Face]:
-        for face in self.all_faces:
-            yield TriTri2D(self.proj(), face.proj())
-
-    def triangulate(self):
-        # TODO
-        # This needs to get done - when we remove a vertex, we need to re-triangulate the graph
-        # We might be able to do this faster
-        pass
-
-    def __str__(self) -> str:
-        res = ''
-        for k in self.rot:
-            neighbors = ', '.join(map(str, self.rot[k]))
-            res += f"{str(k)}\t: {neighbors}\n"
+        for simplex in self.tri.simplices:
+            tri = list(map(lambda x: self.nodes[x], simplex))
+            f = Face(tri)
+            if TriTri2D(f.proj(), face.proj()):
+                res.add(f)
 
         return res
 
+    def plot(self):
+        points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))
+        ax = plt.axes(projection='3d')
+        ax.plot_trisurf(points[:, 0],
+                        points[:, 1],
+                        points[:, 2],
+                        cmap='viridis',
+                        edgecolor='none')
+        plt.show()
 
-graph = TerrainGraph()
+        # plt.triplot(points[:, 0], points[:, 1], self.tri.simplices)
+        # plt.plot(points[:, 0], points[:, 1], 'o')
+        # plt.show()
 
-a = TerrainNode("A", Location(1, 0, 5))
-b = TerrainNode("B", Location(1, 1, 10))
-c = TerrainNode("C", Location(0, 1, 5))
-d = TerrainNode("D", Location(0, 0, 0))
+    def triangulate(self):
+        if len(self.nodes) >= 3:
+            self.tri = Delaunay(self._2d)
 
-graph.add_node(a)
-graph.add_node(b)
-graph.add_node(c)
-graph.add_node(d)
+    def __str__(self) -> str:
+        if self.tri:
+            return str(self.tri.simplices)
+        else:
+            f = ""
+            for n in self.nodes:
+                f += f'{n}\n'
+            return f
 
-graph.add_edge(a, 0, b, 0)
-graph.add_edge(b, 1, c, 0)
-graph.add_edge(c, 1, d, 0)
-graph.add_edge(d, 1, a, 1)
-graph.add_edge(a, 1, c, 0)
+    def init_random(i):
+        points = np.random.rand(i, 4)
+        nodes = []
+        for p in points:
+            node = TerrainNode(hex(round(p[0] * 10000)),
+                               Location(p[1] * 100, p[2] * 100, p[3] * 100))
+            nodes.append(node)
 
-for face in graph.all_faces:
-    print(face)
+        return TerrainGraph(nodes)
 
-    print(face.angle())
+    def init_flat(i):
+        points = np.random.rand(i, 3)
+        nodes = []
+        for p in points:
+            node = TerrainNode(hex(round(p[0] * 10000)),
+                               Location(p[1] * 100, p[2] * 100, 0))
+            nodes.append(node)
+
+        return TerrainGraph(nodes)
+
+    def init_file(file_name: str):
+        with open(file_name) as f:
+            nodes = []
+            for l in f.readlines():
+                l = l.split(' ')
+                y = float(l[0])
+                x = float(l[1])
+                z = float(l[2])
+                node = TerrainNode(hex(randint(0, 10000)), Location(x, y, z))
+                nodes.append(node)
+
+        return TerrainGraph(nodes)

@@ -1,14 +1,49 @@
 const _ = require('lodash')
 const {Client} = require("@googlemaps/google-maps-services-js")
 const fs = require('fs')
+const dotenv = require('dotenv')
+const process = require('process')
+const utmObj = require('utm-latlng')
+
+const radius = 6371
+var utm = new utmObj();
+
+// This function converts lat and lng coordinates to GLOBAL X and Y positions
+function latlngToGlobalXY(lat, lng){
+  //Calculates x based on cos of average of the latitudes
+  let x = radius*lng*Math.cos((b_l[0] + t_r[0])/2);
+  //Calculates y based on latitude
+  let y = radius*lat;
+  return {x,y}
+}
+
+dotenv.config()
 
 const client = new Client({})
 
-const LONG_MIN = -122.041105
-const LONG_MAX = -121.465146
-const LAT_MIN = 46.696071
-const LAT_MAX = 47.088650
-const increment = 0.01
+// Seattle
+
+let b_l = [30.954148, 34.424824]
+let t_r = [31.977915, 35.541891]
+const increment = 0.05
+
+// Mt. Rainier
+// let b_l = [46.696071,  -121.465146]
+// let t_r = [47.088650, -122.041105]
+// const increment = 0.03
+
+
+// Kansas
+// const b_l = [37.000052, -102.043611]
+// const t_r = [40.028416, -95.285846]
+// const increment = 0.3
+
+const LONG_MIN = Math.min(b_l[1], t_r[1])
+const LONG_MAX = Math.max(b_l[1], t_r[1])
+const LAT_MIN = Math.min(b_l[0], t_r[0])
+const LAT_MAX = Math.max(b_l[0], t_r[0])
+
+const {x: x_min, y: y_min} = latlngToGlobalXY(LAT_MIN, LONG_MIN)
 
 function getLocations(){
     var current_lat = LAT_MIN;
@@ -59,7 +94,8 @@ function getLocations(){
       
       for(var k=0;k<result.length;k++){
         var item = result[k];
-        var line = `${item.location.lat} ${item.location.lng} ${item.elevation}\r\n`;
+        const {Easting: x, Northing: y} = utm.convertLatLngToUtm(item.location.lat, item.location.lng, 1)
+        var line = `${x} ${y} ${item.elevation}\r\n`;
         lines.push(line);
       }
     }
