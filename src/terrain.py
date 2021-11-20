@@ -195,6 +195,9 @@ class TerrainGraph(object):
             points[:, 1],
             points[:, 2],
             cmap='viridis',
+            alpha=.7, 
+            edgecolor='k',
+            linewidth=.1
         )
 
     def plot_2d(self, ax):

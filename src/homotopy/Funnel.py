@@ -34,7 +34,7 @@ class Funnel():
     def funnel(self, visualize=True):
         # funnel algoirthm, no return, visualize flag determines whether we plot results
         if visualize:
-            fv = FunnelVisualizer(self.s, self.holes)
+            fv = FunnelVisualizer(self.s,self.holes)
 
         for cnt in range(len(self.similar_path) - 1):
             edge = self.similar_path[cnt + 1]

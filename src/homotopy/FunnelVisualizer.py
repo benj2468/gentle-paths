@@ -13,14 +13,16 @@ class FunnelVisualizer():
     def plot_surface(self):
         plt.triplot(self.s.points[:, 0], self.s.points[:, 1],
                     self.s.tri.simplices)
-        plt.plot(self.s.points[:, 0], self.s.points[:, 1], 'o')
+        #plt.plot(self.s.points[:, 0], self.s.points[:, 1], 'o')
         plt.show()
 
     def plot_funnel(self, sim_path, fan, tail, apex, edge, start, target):
+        for idx,vtx in enumerate(self.s.points):
+            pass
         plt.triplot(self.s.points[:, 0],
                     self.s.points[:, 1],
                     self.s.tri.simplices,
-                    color='b')
+                    color='#1f77b4')
         plt.plot(start[0], start[1], 'o', color='m')
         plt.plot(target[0], target[1], 'o', color='m')
         for idx, p in enumerate(sim_path):
@@ -34,7 +36,7 @@ class FunnelVisualizer():
         if not self.holes == None:
             hole_tris = np.array(self.holes)
             for tri in hole_tris:
-                plt.fill(tri[:, 0], tri[:, 1], 'm', alpha=.5)
+                plt.fill(tri[:, 0], tri[:, 1], 'k', alpha=1)
 
         lb = np.array(fan)
         e = np.array(edge)
