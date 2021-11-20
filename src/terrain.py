@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Generator, List, Mapping, Optional, Set, Tuple
 import numpy as np
 from numpy.random.mtrand import randint
-from scipy.spatial import Delaunay
+from scipy.spatial import Delaunay, distance
 import matplotlib.pyplot as plt
 
 
@@ -16,6 +16,9 @@ class Location(object):
 
     def proj(self) -> Tuple[int, int]:
         return (self.x, self.y)
+
+    def distance(self, o: Location) -> int:
+        return distance.euclidean((self.x, self.y, self.z), (o.x, o.y, o.z))
 
     def __iter__(self):
         for i in (self.x, self.y, self.z):
@@ -47,7 +50,7 @@ class TerrainNode(object):
         return self._loc.proj()
 
     def __str__(self) -> str:
-        return f"{self._label}"
+        return f"{self._loc}"
 
     def __eq__(self, other: TerrainNode) -> bool:
         return self._label == other._label and self._loc == other._loc

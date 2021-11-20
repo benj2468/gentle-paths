@@ -1,12 +1,13 @@
 from math import pi
-from terrain import TerrainGraph
-#from simplifier import surface_simplifier
-#from homotopy.Funnel import Funnel
+from terrain import Location, TerrainGraph
+from simplifier import surface_simplifier
+from path_finder import path_finder
 
 graph = TerrainGraph.init_file("./maps_fetch/data.txt")
 
-graph.plot()
+s = list(surface_simplifier(graph, [100]))[0]
 
-#simp = surface_simplifier(graph, pi / 2.0, 0.7)
+path = path_finder(s, Location(3426554, 653247, -543),
+                   Location(3441938, 688097, 626), pi / 2)
 
-#simp.plot()
+print(path)
