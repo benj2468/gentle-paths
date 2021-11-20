@@ -121,7 +121,7 @@ class Face(object):
         val = (np.dot(other, cp) /
                (np.linalg.norm(cp) * np.linalg.norm(other))).round(8)
 
-        return acos(val)
+        return np.arccos(val)
 
     def __hash__(self) -> str:
         if len(self.nodes) != 3:
@@ -160,14 +160,15 @@ class TerrainGraph(object):
         self._2d.remove(node.proj())
         self._update_faces()
 
-    def plot(self):
+    def plot(self, ax=None):
         points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))
-        ax = plt.axes(projection='3d')
+        if not ax:
+            ax = plt.axes(projection='3d')
         ax.plot_trisurf(points[:, 0],
                         points[:, 1],
                         points[:, 2],
                         cmap='viridis',
-                        edgecolor='none')
+                        edgecolor='b', alpha=.1)
         plt.show()
 
     def __str__(self) -> str:

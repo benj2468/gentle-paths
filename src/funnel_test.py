@@ -1,8 +1,8 @@
-from Surface import Surface
+from homotopy.Surface import Surface
 import numpy as np
 from numpy.lib.function_base import flip
-from Surface import Surface
-from Funnel import Funnel
+from homotopy.Surface import Surface
+from homotopy.Funnel import Funnel
 
 # generate test
 def test_funnel(seed, num_points, num_edges):
@@ -35,7 +35,8 @@ def test_funnel(seed, num_points, num_edges):
     target = (vtx_map[path[-1][0]] + vtx_map[path[-1][1]])/2
     target[0] = target[0]+.02
     funnel = Funnel(surf, start, target, path, vtx_map)
-    funnel.funnel()
+    path = funnel.funnel()
+    print(path)
 
 
 ##########TESTS###############

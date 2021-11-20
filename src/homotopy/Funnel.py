@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.lib.function_base import flip
-from Surface import Surface
-from FunnelVisualizer import FunnelVisualizer
+from homotopy.Surface import Surface
+from homotopy.FunnelVisualizer import FunnelVisualizer
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
@@ -87,7 +87,8 @@ class Funnel():
             fv.plot_funnel(self.similar_path, self.fan, self.tail, self.apex,
                            edge, self.start, self.target)
 
-        plt.show()
+            plt.show()
+        return self.tail
 
     def add_to_boundary(self, pt, badpt, side, edge):
         # adding point to a boundary

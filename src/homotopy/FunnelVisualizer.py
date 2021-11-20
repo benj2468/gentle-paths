@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib
-from Surface import Surface
+from homotopy.Surface import Surface
 import numpy as np
 
 
