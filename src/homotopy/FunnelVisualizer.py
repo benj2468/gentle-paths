@@ -6,8 +6,9 @@ import numpy as np
 
 
 class FunnelVisualizer():
-    def __init__(self, surface):
+    def __init__(self, surface, holes=None):
         self.s = surface
+        self.holes = holes
 
     def plot_surface(self):
         plt.triplot(self.s.points[:, 0], self.s.points[:, 1],
@@ -29,6 +30,11 @@ class FunnelVisualizer():
                                                clip=True)
             mapper = cm.ScalarMappable(norm=norm, cmap=cm.Greys_r)
             plt.plot(arr[:, 0], arr[:, 1], color=mapper.to_rgba(idx))
+
+        if not self.holes == None:
+            hole_tris = np.array(self.holes)
+            for tri in hole_tris:
+                plt.fill(tri[:, 0], tri[:, 1], 'm', alpha=.5)
 
         lb = np.array(fan)
         e = np.array(edge)

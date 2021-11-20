@@ -7,12 +7,13 @@ from copy import deepcopy
 
 
 class Funnel():
-    def __init__(self, surface, start, target, similar_path, vtx_map):
+    def __init__(self, surface, start, target, similar_path, vtx_map, holes=None):
         self.s = surface
         self.similar_path = similar_path
         self.vtx_map = vtx_map
         self.start = start
         self.target = target
+        self.holes = holes
 
         # data structures for funnel algorithm
         self.fan = [
@@ -33,7 +34,7 @@ class Funnel():
     def funnel(self, visualize=True):
         # funnel algoirthm, no return, visualize flag determines whether we plot results
         if visualize:
-            fv = FunnelVisualizer(self.s)
+            fv = FunnelVisualizer(self.s, self.holes)
 
         for cnt in range(len(self.similar_path) - 1):
             edge = self.similar_path[cnt + 1]

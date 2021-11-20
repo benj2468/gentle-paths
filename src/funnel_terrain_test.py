@@ -2,6 +2,7 @@ from terrain import TerrainGraph, Location
 import numpy as np
 from homotopy.Surface import Surface
 from homotopy.Funnel import Funnel
+from homotopy.FunnelVisualizer import FunnelVisualizer
 from scipy.interpolate import interp1d, interp2d
 import matplotlib.pyplot as plt
 
@@ -66,8 +67,8 @@ def test_funnel_terrain(seed, surf, num_edges, hole_tris, graph):
     start[0] = start[0]+.002
     target = (vtx_map[path[-1][0]] + vtx_map[path[-1][1]])/2
     target[0] = target[0]+.02
-    funnel = Funnel(surf, start, target, path, vtx_map)
-    path = np.array(funnel.funnel(visualize=False))
+    funnel = Funnel(surf, start, target, path, vtx_map, holes=hole_tris)
+    path = np.array(funnel.funnel(visualize=True))
     #f = interp1d(path[:,0], path[:,1], kind='linear')
     #xmin, xmax = min(path[:,0]), max(path[:,0])
     #ymin, ymax = min(path[:,1]), max(path[:,1])
@@ -96,12 +97,20 @@ def test_funnel_terrain(seed, surf, num_edges, hole_tris, graph):
     print(len(zs))
     print(len(xs[(idxes)]))
     print(len(ys[(idxes)]))
-    fig = plt.figure()
+    #fig = plt.figure()
     #zs = [0 for x in xs]
-    ax = plt.axes(projection='3d')
-    ax.plot(xs[(idxes)], ys[(idxes)], zs, color='k', linewidth=2)
-    graph.plot(ax=ax)
-    plt.show()
+    #ax = plt.axes(projection='3d')
+    #ax.plot(xs[(idxes)], ys[(idxes)], zs, color='k', linewidth=2)
+    #graph.plot(ax=ax)
+    #plt.show()
+
+def visualize_projection_and_holes(graph, surf, tri_holes):
+    fv = FunnelVisualizer(surf)    
+    hole_tris = np.array(tri_holes)
+    print(hole_tris.shape)
+    for tri in hole_tris:
+        plt.fill(tri[:, 0], tri[:, 1], 'm', alpha=.5)
+    fv.plot_surface()
 
 
         
@@ -110,14 +119,16 @@ def test_funnel_terrain(seed, surf, num_edges, hole_tris, graph):
 graph = TerrainGraph.init_file("./maps_fetch/data.txt")
 hole_tris = []
 points = set()
+face_angles = []
 for face in graph.faces:
-    if face.angle() > 3.14:
+    face_angles.append((np.degrees(face.angle())))
+    if np.degrees(face.angle()) < 177:
         tri = []
-
         for node in face.nodes:
             tri.append((node._loc.x, node._loc.y))
             points.add((node._loc.x, node._loc.y))
         hole_tris.append(tri)
+
 
 boundary_x = (min([x for (x,y) in graph._2d]), max([x for (x,y) in graph._2d]))
 boundary_y= (min([y for (x,y) in graph._2d]), max([y for (x,y) in graph._2d]))
@@ -136,6 +147,12 @@ points = np.array(point_list)
 surf = Surface(num_points=None, is_terrain=True, init_random=False, points=points)
 
 
-seed = 5
-num_edges = 10
+seed = 1
+num_edges = 20
+
+#seed = 12
+#num_edges = 20
+
+visualize_projection_and_holes(graph, surf, hole_tris)
+graph.plot()
 test_funnel_terrain(seed, surf, num_edges, hole_tris, graph)

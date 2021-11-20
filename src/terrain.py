@@ -124,7 +124,7 @@ class Face(object):
         val = (np.dot(other, cp) /
                (np.linalg.norm(cp) * np.linalg.norm(other))).round(8)
 
-        return np.arccos(val)
+        return (np.arccos(val))
 
     def __hash__(self) -> str:
         if len(self.nodes) != 3:
