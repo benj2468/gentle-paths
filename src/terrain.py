@@ -1,10 +1,8 @@
 from __future__ import annotations
-
-from typing import Any, Generator, List, Mapping, Optional, Set, Tuple
+from typing import Any, Generator, List, Tuple
 import numpy as np
 from numpy.random.mtrand import randint
 from scipy.spatial import Delaunay, distance
-import matplotlib.pyplot as plt
 
 
 class Location(object):
@@ -126,6 +124,26 @@ class Face(object):
 
         return acos(val)
 
+    def find(self, loc: Tuple[int, int]) -> Location:
+        if len(self.nodes) != 3:
+            print("Can only determine angle of a plane")
+            return
+        points = list(map(lambda x: np.array(tuple(x._loc)), self.nodes))
+        p1 = points[0]
+        p2 = points[1]
+        p3 = points[2]
+
+        v1 = p3 - p1
+        v2 = p2 - p1
+
+        # the cross product is a vector normal to the plane
+        cp = np.cross(v1, v2)
+        d = np.dot(p1, cp)
+
+        z = (d - cp[0] * loc[0] - cp[1] * loc[1]) / cp[2]
+
+        return Location(loc[0], loc[1], z)
+
     def __hash__(self) -> str:
         if len(self.nodes) != 3:
             raise ("bad face")
@@ -163,15 +181,29 @@ class TerrainGraph(object):
         self._2d.remove(node.proj())
         self._update_faces()
 
-    def plot(self):
+    def find(self, loc: Tuple[int, int]) -> Tuple[Location, int]:
+        simplex = self.tri.find_simplex([loc])[0]
+        face = Face(
+            list(map(lambda x: self.nodes[x], self.tri.simplices[simplex])))
+        return face.find(loc), simplex
+
+    def plot(self, ax):
         points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))
-        ax = plt.axes(projection='3d')
-        ax.plot_trisurf(points[:, 0],
-                        points[:, 1],
-                        points[:, 2],
-                        cmap='viridis',
-                        edgecolor='none')
-        plt.show()
+
+        ax.plot_trisurf(
+            points[:, 0],
+            points[:, 1],
+            points[:, 2],
+            cmap='viridis',
+        )
+
+    def plot_2d(self, ax):
+        points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))
+
+        ax.triplot(
+            points[:, 0],
+            points[:, 1],
+        )
 
     def __str__(self) -> str:
         if self.tri:

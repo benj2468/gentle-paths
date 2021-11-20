@@ -21,14 +21,13 @@ class SearchSolution:
 
             string += "number of nodes visited: {:d}\n"
             string += "solution length: {:d}\n"
-            string += "cost: {:d}\n"
+            string += "cost: {:f}\n"
             string += "path: {:s}\n"
 
             path_str = "["
             for state in self.path:
                 path_str += f"{state},"
             path_str += ']'
-
             string = string.format(self.problem_name,
                                    self.search_method, self.nodes_visited,
                                    len(self.path), self.cost, path_str)
