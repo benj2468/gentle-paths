@@ -4,6 +4,7 @@
 
 from heapq import heappush, heappop
 from search_solution import SearchSolution
+import matplotlib.pyplot as plt
 
 
 class AstarNode:
@@ -50,6 +51,8 @@ class PriorityQueue:
     def pop(self):
         res = heappop(self.queue)
         while res.removed:
+            if self.is_empty():
+                return None
             res = heappop(self.queue)
         return res
 
@@ -81,6 +84,8 @@ def astar_search(search_problem):
 
     while not frontier.is_empty():
         current = frontier.pop()
+        if not current:
+            break
 
         solution.nodes_visited += 1
         if search_problem.goal_test(current.state):
