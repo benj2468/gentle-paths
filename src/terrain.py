@@ -182,11 +182,18 @@ class TerrainGraph(object):
         self._update_faces()
 
     def find(self, loc: Tuple[int, int]) -> Tuple[Location, int]:
-        simplex = self.tri.find_simplex([loc])[0]
+        if type(loc) == Location:
+            simplex = self.tri.find_simplex([tuple(loc)[:2]])[0]
+        else:
+            simplex = self.tri.find_simplex([loc])[0]
         face = Face(
             list(map(lambda x: self.nodes[x], self.tri.simplices[simplex])))
-        return face.find(loc), simplex
 
+        if not type(loc) == Location:
+            loc = face.find(loc)
+        return loc, simplex
+
+    ## Plotting
     def plot(self, ax):
         points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))
 
