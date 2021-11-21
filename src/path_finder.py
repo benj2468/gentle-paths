@@ -41,14 +41,19 @@ def incline(l1: Location, l2: Location):
 class PathFinderSearch():
     State = Tuple[Location, int, Optional[int]]
 
-    def __init__(self, S: TerrainGraph, start: Tuple[int, int],
-                 destination: Tuple[int, int], theta_m: float) -> None:
+    def __init__(self,
+                 S: TerrainGraph,
+                 start: Tuple[int, int],
+                 destination: Tuple[int, int],
+                 theta_m: float,
+                 precision: float = 10) -> None:
         self.terrain = S
 
         start = S.find(start)
         self.start_state = (start[0], start[1])
         self.destination = S.find(destination)
         self.theta_m = theta_m
+        self.precision = precision
 
     def goal_test(self, state: State) -> bool:
         return self.destination[1] in state[1:]
@@ -66,7 +71,7 @@ class PathFinderSearch():
             p3 = self.terrain.nodes[face[2]]
 
             for i, (p, v) in enumerate([(p3, p2), (p1, p3), (p2, p1)]):
-                for u in interpolate(p, v, 10):
+                for u in interpolate(p, v, self.precision):
                     dist, inc = incline(loc, u)
                     if inc <= self.theta_m:
                         yield (dist, (u, simplex, neighbors[i]))
@@ -75,13 +80,18 @@ class PathFinderSearch():
         return self.destination[0].distance(state[0])
 
 
-def path_finder(S: TerrainGraph, start: Tuple[int, int],
-                destination: Tuple[int,
-                                   int], theta_m: float) -> SearchSolution:
-    search_problem = PathFinderSearch(S, start, destination, theta_m)
+def path_finder(S: TerrainGraph,
+                start: Tuple[int, int],
+                destination: Tuple[int, int],
+                theta_m: float,
+                precision: float = None) -> SearchSolution:
+
+    search_problem = PathFinderSearch(S, start, destination, theta_m,
+                                      precision)
 
     res = astar_search(search_problem)
 
-    res.path.append(search_problem.destination)
+    if len(res.path):
+        res.path.append(search_problem.destination)
 
     return res

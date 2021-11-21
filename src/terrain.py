@@ -190,15 +190,13 @@ class TerrainGraph(object):
     def plot(self, ax):
         points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))
 
-        ax.plot_trisurf(
-            points[:, 0],
-            points[:, 1],
-            points[:, 2],
-            cmap='viridis',
-            alpha=.7, 
-            edgecolor='k',
-            linewidth=.1
-        )
+        ax.plot_trisurf(points[:, 0],
+                        points[:, 1],
+                        points[:, 2],
+                        cmap='viridis',
+                        alpha=.7,
+                        edgecolor='k',
+                        linewidth=.1)
 
     def plot_2d(self, ax):
         points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))

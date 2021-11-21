@@ -8,29 +8,53 @@ const utmObj = require('utm-latlng')
 const radius = 6371
 var utm = new utmObj();
 
-// This function converts lat and lng coordinates to GLOBAL X and Y positions
-function latlngToGlobalXY(lat, lng){
-  //Calculates x based on cos of average of the latitudes
-  let x = radius*lng*Math.cos((b_l[0] + t_r[0])/2);
-  //Calculates y based on latitude
-  let y = radius*lat;
-  return {x,y}
-}
-
 dotenv.config()
 
 const client = new Client({})
 
+
+/**
+     * Calculates the haversine distance between point A, and B.
+     * @param {number[]} latlngA [lat, lng] point A
+     * @param {number[]} latlngB [lat, lng] point B
+     * @param {boolean} isMiles If we are using miles, else km.
+     */
+ const haversineDistance = ([lat1, lon1], [lat2, lon2], isMiles = false) => {
+  const toRadian = angle => (Math.PI / 180) * angle;
+  const distance = (a, b) => (Math.PI / 180) * (a - b);
+  const RADIUS_OF_EARTH_IN_KM = 6371;
+
+  const dLat = distance(lat2, lat1);
+  const dLon = distance(lon2, lon1);
+
+  lat1 = toRadian(lat1);
+  lat2 = toRadian(lat2);
+
+  // Haversine Formula
+  const a =
+    Math.pow(Math.sin(dLat / 2), 2) +
+    Math.pow(Math.sin(dLon / 2), 2) * Math.cos(lat1) * Math.cos(lat2);
+  const c = 2 * Math.asin(Math.sqrt(a));
+
+  let finalDistance = RADIUS_OF_EARTH_IN_KM * c;
+
+  if (isMiles) {
+    finalDistance /= 1.60934;
+  }
+
+  return finalDistance;
+};
+
 // Seattle
+// const MAP_NAME = 'SEATTLE'
+// let b_l = [47.451372, -122.371493]
+// let t_r = [47.787456, -122.012248]
+// const increment = 0.005
 
-let b_l = [30.954148, 34.424824]
-let t_r = [31.977915, 35.541891]
-const increment = 0.05
-
-// Mt. Rainier
-// let b_l = [46.696071,  -121.465146]
-// let t_r = [47.088650, -122.041105]
-// const increment = 0.03
+const MAP_NAME = 'RAINIER'
+let b_l = [46.696071,  -121.465146]
+let t_r = [47.088650, -122.041105]
+const increment = 0.01
 
 
 // Kansas
@@ -43,7 +67,16 @@ const LONG_MAX = Math.max(b_l[1], t_r[1])
 const LAT_MIN = Math.min(b_l[0], t_r[0])
 const LAT_MAX = Math.max(b_l[0], t_r[0])
 
-const {x: x_min, y: y_min} = latlngToGlobalXY(LAT_MIN, LONG_MIN)
+
+const bottom_right = [b_l[0], t_r[1]]
+const top_left = [t_r[0], b_l[1]]
+const DX = haversineDistance(b_l, bottom_right) * 1000
+const DY = haversineDistance(b_l, top_left) * 1000
+
+const fix = (lat, lng, alt) => {
+  return [(lat - LAT_MIN) * DX / (LAT_MAX - LAT_MIN), (lng - LONG_MIN) * DY / (LONG_MAX - LONG_MIN), alt]
+}
+
 
 function getLocations(){
     var current_lat = LAT_MIN;
@@ -94,33 +127,33 @@ function getLocations(){
       
       for(var k=0;k<result.length;k++){
         var item = result[k];
-        const {Easting: x, Northing: y} = utm.convertLatLngToUtm(item.location.lat, item.location.lng, 1)
-        var line = `${x} ${y} ${item.elevation}\r\n`;
+        var line = `${item.location.lat} ${item.location.lng} ${item.elevation}\r\n`;
         lines.push(line);
       }
     }
-    fs.writeFileSync('data.txt', lines.join(''));
+    fs.writeFileSync(`../maps/${MAP_NAME}.txt`, lines.join(''));
   }
 
   async function convertDataToGrid(){
-    let data = await fs.readFile('data.txt');
+    let data = await fs.readFileSync(`../maps/${MAP_NAME}.txt`);
     data = data.toString().split('\r\n').filter((item)=>{ return item.length > 0 }).map((item)=>{ return item.split(' ') });
     data = data.map((item)=>{
       lat = item[0];
       lng = item[1];
       alt = item[2];
-    return [
-        ((lat - LAT_MIN) / increment).toFixed(0),
-        ((lng - LONG_MIN) / increment).toFixed(0),
-        alt
-      ].join(' ')
+    return fix(lat, lng, alt).join(' ')
     });
-    await fs.writeFile('grid.txt', data.join('\r\n'));
+    await fs.writeFileSync(`../maps/${MAP_NAME}.txt`, data.join('\r\n'));
   }
 
-
+const main = async () => {
   locations = getLocations()
   console.log(locations[0])
   console.log(locations.length)
-  getElevations(locations)
+  await getElevations(locations)
+  convertDataToGrid()
+}
   
+  
+
+main()

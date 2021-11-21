@@ -4,22 +4,27 @@ from simplifier import surface_simplifier
 from path_finder import path_finder
 import matplotlib.pyplot as plt
 
-graph = TerrainGraph.init_file("./maps_fetch/data.txt")
+theta_m = pi / 2
+precision = 10
+map = "RAINIER"
 
-# graph = list(surface_simplifier(graph, [100]))[0]
+graph = TerrainGraph.init_file(f"./maps/{map}.txt")
 
 ax1 = plt.axes(projection='3d')
 graph.plot(ax1)
 
-# plt.figure()
+ax1.set_title(
+    f"{map}: nodes = {len(graph.nodes)} Theta = {theta_m}; Precision = {precision}"
+)
 
-path = path_finder(graph, (3534005, 640000), (3488000, 700000), pi / 500)
+# Notice different between running:
+# - pi / 2 - should be straight line
+# - pi / 20 - start to see curve around the mountain
+# - pi / 50 - switchbacks
 
-print(path.cost)
+path = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
 
-# ax2 = plt.axes()
 points = [[], [], []]
-# graph.plot_2d(ax2)
 for loc in path.path:
     loc = tuple(loc[0])
     points[0].append(loc[0])
