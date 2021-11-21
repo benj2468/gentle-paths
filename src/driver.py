@@ -6,24 +6,27 @@ import matplotlib.pyplot as plt
 
 graph = TerrainGraph.init_file("./maps_fetch/data.txt")
 
-s = list(surface_simplifier(graph, [100]))[0]
+# graph = list(surface_simplifier(graph, [100]))[0]
 
 ax1 = plt.axes(projection='3d')
-s.plot(ax1)
+graph.plot(ax1)
 
-plt.figure()
+# plt.figure()
 
-path = path_finder(s, (3534005, 640000), (3460000, 700000), pi / 15)
+path = path_finder(graph, (3534005, 640000), (3488000, 700000), pi / 500)
 
-ax2 = plt.axes()
-points = [[], []]
-s.plot_2d(ax2)
-for loc in path:
-    loc = tuple(loc[0])[0:2]
+print(path.cost)
+
+# ax2 = plt.axes()
+points = [[], [], []]
+# graph.plot_2d(ax2)
+for loc in path.path:
+    loc = tuple(loc[0])
     points[0].append(loc[0])
     points[1].append(loc[1])
+    points[2].append(loc[2])
 
-ax2.scatter(points[0], points[1])
-ax2.plot(points[0], points[1])
+ax1.scatter(points[0], points[1], points[2])
+ax1.plot(points[0], points[1], points[2])
 
 plt.show()

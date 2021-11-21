@@ -1,10 +1,10 @@
 # Benjamin Cape - 21F - CS76
 # PA2
 # 10.02.10
+# Updated - Comp. Topology 11.20.21
 
 from heapq import heappush, heappop
 from search_solution import SearchSolution
-import matplotlib.pyplot as plt
 
 
 class AstarNode:

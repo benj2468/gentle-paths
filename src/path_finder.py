@@ -1,6 +1,7 @@
 from __future__ import annotations
 from math import asin
 from typing import List, Optional, Tuple
+from search_solution import SearchSolution
 from terrain import Location, TerrainGraph, TerrainNode
 from astar import astar_search
 import numpy as np
@@ -32,9 +33,9 @@ def incline(l1: Location, l2: Location):
     if dist == 0:
         return 0, 0
 
-    dy = abs(l1.y - l2.y)
+    dz = abs(l1.z - l2.z)
 
-    return (dist, abs(asin(dy / dist)))
+    return (dist, asin(dz / dist))
 
 
 class PathFinderSearch():
@@ -74,10 +75,13 @@ class PathFinderSearch():
         return self.destination[0].distance(state[0])
 
 
-def path_finder(S: TerrainGraph, start: Location, destination: Location,
-                theta_m: float) -> List[Location]:
+def path_finder(S: TerrainGraph, start: Tuple[int, int],
+                destination: Tuple[int,
+                                   int], theta_m: float) -> SearchSolution:
     search_problem = PathFinderSearch(S, start, destination, theta_m)
 
     res = astar_search(search_problem)
 
-    return res.path
+    res.path.append(search_problem.destination)
+
+    return res
