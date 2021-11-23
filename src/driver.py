@@ -7,17 +7,17 @@ from path_finder import path_finder
 import matplotlib.pyplot as plt
 
 
-def quantitative_test(graph: TerrainGraph, theta_m, precision):
-    path = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
+def quantitative_test(graph: TerrainGraph, start, end, theta_m, precision):
+    path = path_finder(graph, start, end, theta_m, precision)
 
     print(
         f'theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {path.cost}'
     )
 
 
-def quantitative_test_mapping(S: TerrainGraph, graph: TerrainGraph, theta_m,
-                              precision):
-    solution = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
+def quantitative_test_mapping(S: TerrainGraph, start, end, graph: TerrainGraph,
+                              theta_m, precision):
+    solution = path_finder(graph, start, end, theta_m, precision)
 
     print(
         f'BEFORE MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}'
@@ -30,9 +30,9 @@ def quantitative_test_mapping(S: TerrainGraph, graph: TerrainGraph, theta_m,
     )
 
 
-def visual_mapping_test(S: TerrainGraph, graph: TerrainGraph, theta_m,
-                        precision):
-    solution = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
+def visual_mapping_test(S: TerrainGraph, start, end, graph: TerrainGraph,
+                        theta_m, precision):
+    solution = path_finder(graph, start, end, theta_m, precision)
 
     print(
         f'BEFORE MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}'
@@ -40,7 +40,7 @@ def visual_mapping_test(S: TerrainGraph, graph: TerrainGraph, theta_m,
 
     plot_solution(S, solution)
 
-    solution2 = path_map(S, solution, theta_m, precision)
+    solution2 = path_map(S, solution, theta_m, precision * 2)
 
     print(
         f'AFTER MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution2.cost}'
@@ -70,16 +70,18 @@ def plot_solution(graph: TerrainGraph, solution: SearchSolution):
     plt.figure()
 
 
-def visiaul_test(graph: TerrainGraph, theta_m, precision):
-    solution = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
+def visiaul_test(graph: TerrainGraph, start, end, theta_m, precision):
+    solution = path_finder(graph, start, end, theta_m, precision)
+
+    print(f'Done: Theta = {round(theta_m, 5)}; Precision = {precision}')
 
     plot_solution(graph, solution)
 
 
-thetas = [pi / 40]
+thetas = [pi / 20, pi / 30, pi / 40]
 precisions = [10]
 
-map = "RAINIER"
+map = "FRANCONIA"
 
 S = TerrainGraph.init_file(f"./maps/{map}.txt")
 
@@ -87,6 +89,6 @@ graph = surface_simplifier(S, len(S.nodes) / 2)
 
 for theta_m in thetas:
     for precision in precisions:
-        visual_mapping_test(S, graph, theta_m, precision)
+        visiaul_test(S, (1, 1), (20000, 20000), theta_m, precision)
 
 plt.show()

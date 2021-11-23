@@ -51,11 +51,16 @@ const client = new Client({})
 // let t_r = [47.787456, -122.012248]
 // const increment = 0.005
 
-const MAP_NAME = 'RAINIER'
-let b_l = [46.696071,  -121.465146]
-let t_r = [47.088650, -122.041105]
-const increment = 0.01
+// const MAP_NAME = 'RAINIER'
+// let b_l = [46.696071,  -121.465146]
+// let t_r = [47.088650, -122.041105]
+// const increment = 0.01
 
+
+const MAP_NAME = "FRANCONIA"
+let b_l = [43.974171, -71.915121]
+let t_r = [44.234835, -71.482978]
+const increment = 0.006
 
 // Kansas
 // const b_l = [37.000052, -102.043611]
