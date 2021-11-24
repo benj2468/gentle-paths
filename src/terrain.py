@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 from typing import Any, Generator, List, Tuple
 from matplotlib import pyplot as plt
 import numpy as np
@@ -123,7 +124,7 @@ class Face(object):
         val = (np.dot(other, cp) /
                (np.linalg.norm(cp) * np.linalg.norm(other))).round(8)
 
-        return (np.arccos(val))
+        return math.pi - math.acos(val)
 
     def find(self, loc: Tuple[int, int]) -> Location:
         if len(self.nodes) != 3:

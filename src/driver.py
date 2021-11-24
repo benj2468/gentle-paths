@@ -1,4 +1,5 @@
-from path_mapping import path_map
+from funnel_terrain_test import funnel_test
+from path_mapping import path_map, translate_path
 from search_solution import SearchSolution
 from terrain import TerrainGraph
 from simplifier import surface_simplifier
@@ -89,6 +90,24 @@ def visual_test(graph: TerrainGraph, start, end, theta_m, precision):
     plot_solution(graph, solution, theta_m, precision)
 
 
+def path_finder_with_funnel(graph: TerrainGraph, start, end, theta_m,
+                            precision):
+    s = time()
+    solution = path_finder(graph, start, end, theta_m, precision)
+
+    print(
+        f'theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}; time={time() - s}'
+    )
+
+    translated_path = translate_path(graph, solution)
+
+    plot_solution(graph, solution, theta_m, precision)
+
+    print(translated_path)
+
+    funnel_test(graph, theta_m, 1, translated_path)
+
+
 thetas = [0.244346]
 precisions = [10]
 
@@ -99,12 +118,12 @@ S = TerrainGraph.init_file(f"./maps/{map}.txt")
 # start = (190000, 10000)
 # end = (35000, 120000)
 start = (200, 2200)
-end = (3000, 3300)
+end = (30000, 30000)
 
-S.plot()
+# S.plot()
 
 for theta_m in thetas:
     for precision in precisions:
-        quantitative_test_mapping(S, start, end, theta_m, precision)
+        path_finder_with_funnel(S, start, end, theta_m, precision)
 
-# plt.show()
+plt.show()
