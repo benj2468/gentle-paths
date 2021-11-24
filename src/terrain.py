@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Generator, List, Tuple
+from matplotlib import pyplot as plt
 import numpy as np
 from numpy.random.mtrand import randint
 from scipy.spatial import Delaunay, distance
@@ -194,8 +195,11 @@ class TerrainGraph(object):
         return loc, simplex
 
     ## Plotting
-    def plot(self, ax):
+    def plot(self, ax=None):
         points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))
+
+        if ax == None:
+            ax = plt.axes(projection='3d', aspect="auto")
 
         ax.plot_trisurf(points[:, 0],
                         points[:, 1],

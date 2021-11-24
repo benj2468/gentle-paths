@@ -95,7 +95,4 @@ def path_finder(S: TerrainGraph,
 
     res = astar_search(search_problem)
 
-    if len(res.path):
-        res.path.append(search_problem.destination)
-
     return res

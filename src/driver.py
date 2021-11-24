@@ -1,55 +1,66 @@
-from math import pi
 from path_mapping import path_map
 from search_solution import SearchSolution
-from terrain import Location, TerrainGraph
+from terrain import TerrainGraph
 from simplifier import surface_simplifier
 from path_finder import path_finder
 import matplotlib.pyplot as plt
+from time import time
 
 
-def quantitative_test(graph: TerrainGraph, theta_m, precision):
-    path = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
+def quantitative_test(graph: TerrainGraph, start, end, theta_m, precision):
+    s = time()
+    path = path_finder(graph, start, end, theta_m, precision)
 
     print(
-        f'theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {path.cost}'
+        f'theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {path.cost}; time={time() - s}'
     )
 
 
-def quantitative_test_mapping(S: TerrainGraph, graph: TerrainGraph, theta_m,
-                              precision):
-    solution = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
+def quantitative_test_mapping(S: TerrainGraph, start, end, theta_m, precision):
+    s = time()
+    graph = surface_simplifier(S, len(S.nodes) / 2)
+    solution = path_finder(graph, start, end, theta_m, precision)
 
     print(
-        f'BEFORE MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}'
+        f'BEFORE MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}; time={time() - s}'
     )
 
     solution2 = path_map(S, solution, theta_m, precision)
 
     print(
-        f'AFTER MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution2.cost}'
+        f'AFTER MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution2.cost}; time={time() - s}'
+    )
+
+    s = time()
+    solution2 = path_finder(S, start, end, theta_m, precision)
+    print(
+        f'NO MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution2.cost}; time={time() - s}'
     )
 
 
-def visual_mapping_test(S: TerrainGraph, graph: TerrainGraph, theta_m,
-                        precision):
-    solution = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
+def visual_mapping_test(S: TerrainGraph, start, end, theta_m, precision):
+
+    s = time()
+    graph = surface_simplifier(S, len(S.nodes) / 10)
+    solution = path_finder(graph, start, end, theta_m, precision)
 
     print(
         f'BEFORE MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}'
     )
 
-    plot_solution(S, solution)
+    plot_solution(graph, solution, theta_m, precision)
 
-    solution2 = path_map(S, solution, theta_m, precision)
+    solution2 = path_map(S, solution, theta_m, precision * 10)
 
     print(
-        f'AFTER MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution2.cost}'
+        f'AFTER MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution2.cost}; time={time() - s}'
     )
 
-    plot_solution(S, solution2)
+    plot_solution(S, solution2, theta_m, precision * 10)
 
 
-def plot_solution(graph: TerrainGraph, solution: SearchSolution):
+def plot_solution(graph: TerrainGraph, solution: SearchSolution, theta_m,
+                  precision):
     ax = plt.axes(projection='3d')
     graph.plot(ax)
 
@@ -70,23 +81,30 @@ def plot_solution(graph: TerrainGraph, solution: SearchSolution):
     plt.figure()
 
 
-def visiaul_test(graph: TerrainGraph, theta_m, precision):
-    solution = path_finder(graph, (1, 1), (20000, 20000), theta_m, precision)
+def visual_test(graph: TerrainGraph, start, end, theta_m, precision):
+    solution = path_finder(graph, start, end, theta_m, precision)
 
-    plot_solution(graph, solution)
+    print(f'Done: Theta = {round(theta_m, 5)}; Precision = {precision}')
+
+    plot_solution(graph, solution, theta_m, precision)
 
 
-thetas = [pi / 40]
+thetas = [0.244346]
 precisions = [10]
 
 map = "RAINIER"
 
 S = TerrainGraph.init_file(f"./maps/{map}.txt")
 
-graph = surface_simplifier(S, len(S.nodes) / 2)
+# start = (190000, 10000)
+# end = (35000, 120000)
+start = (200, 2200)
+end = (3000, 3300)
+
+S.plot()
 
 for theta_m in thetas:
     for precision in precisions:
-        visual_mapping_test(S, graph, theta_m, precision)
+        quantitative_test_mapping(S, start, end, theta_m, precision)
 
-plt.show()
+# plt.show()
