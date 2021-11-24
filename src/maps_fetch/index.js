@@ -51,6 +51,7 @@ const client = new Client({})
 // let t_r = [47.787456, -122.012248]
 // const increment = 0.005
 
+// Rainier
 const MAP_NAME = 'RAINIER'
 let b_l = [46.696071,  -121.465146]
 let t_r = [47.088650, -122.041105]
@@ -58,9 +59,9 @@ const increment = 0.01
 
 
 // Kansas
-// const b_l = [37.000052, -102.043611]
-// const t_r = [40.028416, -95.285846]
-// const increment = 0.3
+// let b_l = [37.000052, -102.043611]
+// let t_r = [40.028416, -95.285846]
+// let increment = 0.3
 
 const LONG_MIN = Math.min(b_l[1], t_r[1])
 const LONG_MAX = Math.max(b_l[1], t_r[1])
