@@ -92,18 +92,30 @@ def visual_test(graph: TerrainGraph, start, end, theta_m, precision):
 
 def path_finder_with_funnel(graph: TerrainGraph, start, end, theta_m,
                             precision):
-    s = time()
-    solution = path_finder(graph, start, end, theta_m, precision)
 
-    print(
-        f'theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}; time={time() - s}'
-    )
+    graph = surface_simplifier(graph, len(graph.nodes) / 5)
+    # s = time()
+    # solution = path_finder(graph, start, end, theta_m, precision)
 
-    translated_path = translate_path(graph, solution)
+    # print(
+    #     f'theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}; time={time() - s}'
+    # )
 
-    plot_solution(graph, solution, theta_m, precision)
+    # translated_path = translate_path(graph, solution)
 
-    print(translated_path)
+    # plot_solution(graph, solution, theta_m, precision)
+
+    # print(translated_path)
+
+    translated_path = [(29, 51), (29, 61), (42, 61), (62, 61), (62, 94),
+                       (94, 82), (106, 82), (120, 82), (107, 120), (107, 139),
+                       (126, 139), (140, 139), (140, 160), (127, 160),
+                       (160, 150), (172, 160), (172, 183), (172, 184),
+                       (172, 185), (161, 185), (173, 185), (173, 210),
+                       (211, 173), (195, 211), (195, 231), (196, 231),
+                       (231, 222), (250, 222), (251, 250), (251, 273),
+                       (273, 252), (252, 284), (252, 285), (263, 285),
+                       (263, 286), (286, 275), (296, 275), (297, 296)]
 
     funnel_test(graph, theta_m, 1, translated_path)
 

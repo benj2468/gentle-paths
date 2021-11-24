@@ -48,7 +48,10 @@ def translate_path(S: TerrainGraph,
     simplices = [path[0][1]]
     i = 1
     while i < len(path) - 1:
-        simplices.append(path[i][2])
+        if path[i][1] != simplices[-1]:
+            simplices[-1] = path[i][2]
+        else:
+            simplices.append(path[i][2])
         i += 1
 
     i = 1
@@ -61,6 +64,9 @@ def translate_path(S: TerrainGraph,
         for j in prev:
             if j in cur:
                 intersection.append(j)
+        if len(intersection) < 2:
+            print("false intersection", prev, cur)
+            exit()
         res.append(tuple(intersection))
         i += 1
 

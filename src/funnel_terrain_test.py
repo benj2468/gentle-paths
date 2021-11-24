@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from terrain import TerrainGraph, Location
+from terrain import Face, TerrainGraph, Location, TerrainNode
 import numpy as np
 from homotopy.Surface import Surface
 from homotopy.Funnel import Funnel
@@ -108,7 +108,6 @@ def test_funnel_terrain(seed, surf, hole_tris, graph, random=True, path=None):
     np.random.seed(seed)
     if random:
         path = construct_random_path(surf, hole_tris)
-    print(path)
     vtx_map = surf.points
     start = (vtx_map[path[0][0]] + vtx_map[path[0][1]]) / 2
     start[0] = start[0] + .002
@@ -169,13 +168,12 @@ def test_funnel_terrain(seed, surf, hole_tris, graph, random=True, path=None):
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
     plt.plot(xs, ys, color='k')
-    plt.show()
 
 
 def visualize_projection_and_holes(graph, surf, tri_holes):
     fv = FunnelVisualizer(surf)
     hole_tris = np.array(tri_holes)
-    print(hole_tris.shape)
+    # print(hole_tris.shape)
     for tri in hole_tris:
         plt.fill(tri[:, 0], tri[:, 1], 'k', alpha=1)
     fv.plot_surface()
@@ -203,13 +201,36 @@ def funnel_test(graph: TerrainGraph, theta_m: float, seed: int,
     hole_tris = []
     points = set()
     zmap = dict()
-    for face in graph.faces:
-        if face.angle() < theta_m:
+    node_idx_map = dict()
+
+    all_nodes = []
+    for (s, e) in path:
+        all_nodes.extend([s, e])
+
+    for simplex in graph.tri.simplices:
+        contained = False
+        nodes = list(
+            map(
+                lambda x:
+                (x, TerrainNode('',
+                                graph.find(graph.tri.points[x])[0])), simplex))
+
+        for n in nodes:
+            if n[0] in all_nodes:
+                contained = True
+        face = Face(
+            list(
+                map(
+                    lambda x: TerrainNode('',
+                                          graph.find(graph.tri.points[x])[0]),
+                    simplex)))
+        if face.angle() < theta_m or contained:
             tri = []
-            for node in face.nodes:
-                tri.append(node.proj())
-                points.add(node.proj())
-                zmap[node.proj()] = node._loc.z
+            for node in nodes:
+                tri.append(node[1].proj())
+                points.add(node[1].proj())
+                node_idx_map[node[0]] = node[1].proj()
+                zmap[node[1].proj()] = node[1]._loc.z
             hole_tris.append(tri)
 
     point_list = []
@@ -217,6 +238,13 @@ def funnel_test(graph: TerrainGraph, theta_m: float, seed: int,
     for point in points:
         point_list.append(list(point))
         zs.append(zmap[point])
+
+    fixed_path = []
+    for (s, e) in path:
+        s_fixed = point_list.index(list(node_idx_map[s]))
+        e_fixed = point_list.index(list(node_idx_map[e]))
+        fixed_path.append((s_fixed, e_fixed))
+
     points = np.array(point_list)
 
     zs = np.array(zs)
@@ -228,5 +256,12 @@ def funnel_test(graph: TerrainGraph, theta_m: float, seed: int,
                    zs=zs)
 
     visualize_projection_and_holes(graph, surf, hole_tris)
-    #graph.plot()
-    test_funnel_terrain(seed, surf, hole_tris, graph, random=False, path=path)
+    # #graph.plot()
+    test_funnel_terrain(seed,
+                        surf,
+                        hole_tris,
+                        graph,
+                        random=False,
+                        path=fixed_path)
+
+    plt.show()

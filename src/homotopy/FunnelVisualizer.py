@@ -17,7 +17,7 @@ class FunnelVisualizer():
         plt.show()
 
     def plot_funnel(self, sim_path, fan, tail, apex, edge, start, target):
-        for idx,vtx in enumerate(self.s.points):
+        for idx, vtx in enumerate(self.s.points):
             pass
         plt.triplot(self.s.points[:, 0],
                     self.s.points[:, 1],
