@@ -59,9 +59,10 @@ const increment = 0.01
 
 
 // Kansas
+// const MAP_NAME = 'KANSAS'
 // let b_l = [37.000052, -102.043611]
 // let t_r = [40.028416, -95.285846]
-// let increment = 0.3
+// const increment = 0.3
 
 const LONG_MIN = Math.min(b_l[1], t_r[1])
 const LONG_MAX = Math.max(b_l[1], t_r[1])
