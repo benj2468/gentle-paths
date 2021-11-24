@@ -57,12 +57,23 @@ const client = new Client({})
 // const increment = 0.01
 
 
-const MAP_NAME = "FRANCONIA"
-let b_l = [43.974171, -71.915121]
-let t_r = [44.234835, -71.482978]
-const increment = 0.006
+// const MAP_NAME = "FRANCONIA"
+// let b_l = [43.974171, -71.915121]
+// let t_r = [44.234835, -71.482978]
+// const increment = 0.006
+
+// const MAP_NAME = "MARK_TWAIN"
+// let b_l = [36.566851, -92.180749]
+// let t_r = [38.314609, -90.273188]
+// const increment = 0.05
+
+const MAP_NAME = 'SI'
+let b_l = [47.487434, -121.770493]
+let t_r = [47.546380, -121.687076]
+const increment = 0.001
 
 // Kansas
+// const MAP_NAME = "KANSAS"
 // const b_l = [37.000052, -102.043611]
 // const t_r = [40.028416, -95.285846]
 // const increment = 0.3
