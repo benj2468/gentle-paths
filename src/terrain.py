@@ -1,10 +1,12 @@
 from __future__ import annotations
 import math
-from typing import Any, Generator, List, Tuple
+from typing import Any, Generator, Iterator, List, Tuple
 from matplotlib import pyplot as plt
 import numpy as np
 from numpy.random.mtrand import randint
 from scipy.spatial import Delaunay, distance
+from sympy.geometry.plane import Plane
+from sympy import solve
 
 
 class Location(object):
@@ -89,6 +91,7 @@ class Face(object):
         self.nodes = np.append(self.nodes, [node])
 
     def proj(self) -> Generator[Tuple[int, int]]:
+        print(self.nodes)
         if len(self.nodes) != 3:
             print("Can only determine projection of triangle")
             return
@@ -118,15 +121,16 @@ class Face(object):
 
         cp = self.tangent_vector()
 
-        other = np.array([0, 0, 1
+        other = np.array([0, 0, -1
                           ]) if not otherFace else otherFace.tangent_vector()
 
         val = (np.dot(other, cp) /
                (np.linalg.norm(cp) * np.linalg.norm(other))).round(8)
 
-        return math.pi - math.acos(val)
+        return math.acos(val)
 
     def find(self, loc: Tuple[int, int]) -> Location:
+        print(self.nodes)
         if len(self.nodes) != 3:
             print("Can only determine angle of a plane")
             return
@@ -166,34 +170,70 @@ class TerrainGraph(object):
         super().__init__()
 
     def _update_faces(self):
-        self.tri = Delaunay(self._2d) if len(self.nodes) >= 3 else None
+        self.tri = Delaunay(
+            self._2d, qhull_options='Qt d') if len(self.nodes) >= 3 else None
         self.faces = list(
             map(Face,
                 map(lambda x: self.nodes[x],
                     self.tri.simplices))) if len(self.nodes) >= 3 else None
 
-    def add_node(self, node: TerrainNode):
+    def add_node(self, node: TerrainNode, wait=False):
         self.nodes = np.append(self.nodes, [node])
         self._2d.append(node.proj())
-        self._update_faces()
+        if not wait:
+            self._update_faces()
 
-    def remove_node(self, node: TerrainNode):
-        idx = np.where(self.nodes == node)[0][0]
-        self.nodes = np.delete(self.nodes, idx)
+    def remove_node(self, i: int, wait=False):
+        node = self.nodes[i]
+        self.nodes = np.delete(self.nodes, i)
         self._2d.remove(node.proj())
-        self._update_faces()
+        if not wait:
+            self._update_faces()
+
+    def remove_all_edges(self, edges: Iterator[Tuple[int,
+                                                     int]]) -> TerrainGraph:
+        nodes = set(self.nodes)
+        new_nodes = []
+        removed = set()
+        for v1, v2 in edges:
+            if v1 in removed or v2 in removed:
+                continue
+            n1, n2 = self.nodes[v1], self.nodes[v2]
+            avg = TerrainNode(
+                '',
+                Location((n1._loc.x + n2._loc.x) / 2,
+                         (n1._loc.y + n2._loc.y) / 2,
+                         (n1._loc.z + n2._loc.z) / 2))
+
+            nodes.remove(n1)
+            nodes.remove(n2)
+            removed.add(v1)
+            removed.add(v2)
+            new_nodes.append(avg)
+
+        return TerrainGraph(list(nodes))
 
     def find(self, loc: Tuple[int, int]) -> Tuple[Location, int]:
         if type(loc) == Location:
             simplex = self.tri.find_simplex([tuple(loc)[:2]])[0]
         else:
             simplex = self.tri.find_simplex([loc])[0]
-        face = Face(
-            list(map(lambda x: self.nodes[x], self.tri.simplices[simplex])))
+        if type(loc) == Location:
+            loc = (loc.x, loc.y)
 
-        if not type(loc) == Location:
-            loc = face.find(loc)
-        return loc, simplex
+        v1, v2, v3 = list(
+            map(lambda x: tuple(self.nodes[x]._loc),
+                self.tri.simplices[simplex]))
+
+        p = Plane(v1, v2, v3)
+        eq = p.equation(*loc)
+        z = float(solve(eq)[0])
+
+        return Location(*loc, z), simplex
+
+    def face(self, simplex: int) -> Face:
+        return Face(
+            list(map(lambda x: self.nodes[x], self.tri.simplices[simplex])))
 
     ## Plotting
     def plot(self, ax=None):
@@ -209,6 +249,8 @@ class TerrainGraph(object):
                         alpha=.7,
                         edgecolor='k',
                         linewidth=.1)
+
+        return ax
 
     def plot_2d(self, ax):
         points = np.array(list(map(lambda x: tuple(x._loc), self.nodes)))

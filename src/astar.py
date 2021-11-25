@@ -21,6 +21,9 @@ class AstarNode:
     def remove(self):
         self.removed = True
 
+    def __str__(self) -> str:
+        return str(self.state) + str(self.expected_cost)
+
     # comparison operator,
     # needed for heappush and heappop to work with AstarNodes:
     def __lt__(self, other):
@@ -31,6 +34,10 @@ class PriorityQueue:
     def __init__(self) -> None:
         self.queue = []
         self.visited = {}
+
+    def __str__(self) -> str:
+
+        return ','.join(list(map(str, self.queue)))
 
     def add_visited(self, node: AstarNode, cost: int):
         self.visited[node.state] = (cost, node)
@@ -71,7 +78,7 @@ def backchain(node):
     return result
 
 
-def astar_search(search_problem):
+def astar_search(search_problem, debug=False):
     heuristic = search_problem.heuristic
     start_node = AstarNode(search_problem.start_state,
                            heuristic(search_problem.start_state))

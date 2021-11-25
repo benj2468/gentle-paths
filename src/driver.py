@@ -2,7 +2,7 @@ from funnel_terrain_test import funnel_test
 from path_mapping import path_map, translate_path
 from search_solution import SearchSolution
 from terrain import TerrainGraph
-from simplifier import surface_simplifier
+from simplifier import angle_simplifier, surface_simplifier
 from path_finder import path_finder
 import matplotlib.pyplot as plt
 from time import time
@@ -19,7 +19,7 @@ def quantitative_test(graph: TerrainGraph, start, end, theta_m, precision):
 
 def quantitative_test_mapping(S: TerrainGraph, start, end, theta_m, precision):
     s = time()
-    graph = surface_simplifier(S, len(S.nodes) / 2)
+    graph = surface_simplifier(S, len(S.nodes) / 5)
     solution = path_finder(graph, start, end, theta_m, precision)
 
     print(
@@ -40,9 +40,9 @@ def quantitative_test_mapping(S: TerrainGraph, start, end, theta_m, precision):
 
 
 def visual_mapping_test(S: TerrainGraph, start, end, theta_m, precision):
-
+    ax = plt.axes(projection='3d')
     s = time()
-    graph = surface_simplifier(S, len(S.nodes) / 10)
+    graph = angle_simplifier(S, theta_m)
     solution = path_finder(graph, start, end, theta_m, precision)
 
     print(
@@ -51,13 +51,13 @@ def visual_mapping_test(S: TerrainGraph, start, end, theta_m, precision):
 
     plot_solution(graph, solution, theta_m, precision)
 
-    solution2 = path_map(S, solution, theta_m, precision * 10)
+    solution2 = path_map(S, solution, theta_m, precision * 2, ax)
 
     print(
         f'AFTER MAPPING: theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution2.cost}; time={time() - s}'
     )
 
-    plot_solution(S, solution2, theta_m, precision * 10)
+    plot_solution(S, solution2, theta_m, precision * 2)
 
 
 def plot_solution(graph: TerrainGraph, solution: SearchSolution, theta_m,
@@ -94,48 +94,42 @@ def path_finder_with_funnel(graph: TerrainGraph, start, end, theta_m,
                             precision):
 
     graph = surface_simplifier(graph, len(graph.nodes) / 5)
-    # s = time()
-    # solution = path_finder(graph, start, end, theta_m, precision)
+    s = time()
+    solution = path_finder(graph, start, end, theta_m, precision)
 
-    # print(
-    #     f'theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}; time={time() - s}'
-    # )
+    print(
+        f'theta_m = {round(theta_m, 5)}; precision = {precision}; cost = {solution.cost}; time={time() - s}'
+    )
 
-    # translated_path = translate_path(graph, solution)
+    translated_path = translate_path(graph, solution)
 
-    # plot_solution(graph, solution, theta_m, precision)
+    plot_solution(graph, solution, theta_m, precision)
 
     # print(translated_path)
-
-    translated_path = [(29, 51), (29, 61), (42, 61), (62, 61), (62, 94),
-                       (94, 82), (106, 82), (120, 82), (107, 120), (107, 139),
-                       (126, 139), (140, 139), (140, 160), (127, 160),
-                       (160, 150), (172, 160), (172, 183), (172, 184),
-                       (172, 185), (161, 185), (173, 185), (173, 210),
-                       (211, 173), (195, 211), (195, 231), (196, 231),
-                       (231, 222), (250, 222), (251, 250), (251, 273),
-                       (273, 252), (252, 284), (252, 285), (263, 285),
-                       (263, 286), (286, 275), (296, 275), (297, 296)]
 
     funnel_test(graph, theta_m, 1, translated_path)
 
 
 thetas = [0.244346]
+# , 0.244346]
 precisions = [10]
 
-map = "RAINIER"
+map = "SI"
 
 S = TerrainGraph.init_file(f"./maps/{map}.txt")
 
 # start = (190000, 10000)
 # end = (35000, 120000)
-start = (200, 2200)
-end = (30000, 30000)
+# start = (200, 2200)
+# end = (30000, 30000)
 
-# S.plot()
+start = (600, 2000)
+end = (5000, 4000)
+
+S.plot()
 
 for theta_m in thetas:
     for precision in precisions:
-        path_finder_with_funnel(S, start, end, theta_m, precision)
+        visual_mapping_test(S, start, end, theta_m, precision)
 
 plt.show()

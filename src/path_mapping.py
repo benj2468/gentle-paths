@@ -6,10 +6,10 @@ from copy import deepcopy
 
 
 def path_map(graph: TerrainGraph, solution: SearchSolution, theta_m: float,
-             precision: int):
+             precision: int, ax):
     path = solution.path
     if len(path) <= 1:
-        return path
+        return solution
 
     loc_path = list(map(lambda x: x[0], path))
     res = deepcopy(solution)
@@ -29,11 +29,21 @@ def path_map(graph: TerrainGraph, solution: SearchSolution, theta_m: float,
             res.path.append((prev, ))
             res.cost += dist
         else:
-            print(f"Mapping, {p_simplex}, {c_simplex} B/c of angle: {inc}")
-            sub = path_finder(graph, prev, cur, theta_m, precision)
+            print(f"Mapping, {p_simplex}, {c_simplex} w/ angle: {inc}")
+            debug = False
+            sub = path_finder(graph,
+                              prev,
+                              cur,
+                              theta_m,
+                              precision,
+                              debug=debug,
+                              ax=ax)
+
             if sub.cost == float('inf'):
                 print("Could not find path")
-                exit()
+                res.cost = float('inf')
+                res.path = []
+                return res
             for elem in sub.path:
                 res.path.append((elem[0], ))
             res.cost += sub.cost
